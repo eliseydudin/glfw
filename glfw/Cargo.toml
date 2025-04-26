@@ -5,3 +5,6 @@ edition = "2024"
 
 [dependencies]
 glfw-sys = { path = "../glfw-sys" }
+
+[dev-dependencies]
+gl = "0.14.0"

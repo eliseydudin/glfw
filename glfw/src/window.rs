@@ -1,6 +1,6 @@
 use glfw_sys::{GLFWmonitor, GLFWwindow};
 use std::{
-    ffi::CString,
+    ffi::{CString, c_void},
     ptr::{self, NonNull},
 };
 
@@ -22,11 +22,11 @@ impl Window {
         Some(Self { raw })
     }
 
-    pub fn new<S: AsRef<str>>(name: S, size: (i32, i32)) -> Option<Self> {
+    pub(crate) fn new<S: AsRef<str>>(name: S, size: (i32, i32)) -> Option<Self> {
         Self::new_ex(name, size, ptr::null_mut(), ptr::null_mut())
     }
 
-    pub fn new_fullscreen<S: AsRef<str>>(name: S) -> Option<Self> {
+    pub(crate) fn new_fullscreen<S: AsRef<str>>(name: S) -> Option<Self> {
         let monitor = unsafe { glfw_sys::glfwGetPrimaryMonitor() };
         let vidmode = unsafe { *glfw_sys::glfwGetVideoMode(monitor) };
         Self::new_ex(
@@ -50,7 +50,8 @@ impl Drop for Window {
     }
 }
 
-pub type LoadProc = fn(name: *const i8) -> *mut ();
+pub type LoadProc = fn(name: *const i8) -> *const c_void;
+pub type SafeLoadProc = fn(name: &str) -> *const c_void;
 
 impl Window {
     pub fn make_global(&self) {
@@ -60,7 +61,20 @@ impl Window {
     pub fn get_load_proc(&self) -> LoadProc {
         |name| unsafe {
             match glfw_sys::glfwGetProcAddress(name) {
-                Some(ptr) => ptr as *mut (),
+                Some(ptr) => ptr as *const c_void,
+                None => ptr::null_mut(),
+            }
+        }
+    }
+
+    pub fn get_safe_load_proc(&self) -> SafeLoadProc {
+        |name| unsafe {
+            let name = match CString::new(name) {
+                Ok(name) => name,
+                Err(_) => return ptr::null_mut(),
+            };
+            match glfw_sys::glfwGetProcAddress(name.as_ptr()) {
+                Some(ptr) => ptr as *const c_void,
                 None => ptr::null_mut(),
             }
         }
@@ -68,5 +82,10 @@ impl Window {
 
     pub fn update(&self) {
         unsafe { glfw_sys::glfwSwapBuffers(self.raw.as_ptr()) }
+    }
+
+    pub fn should_close(&self) -> bool {
+        let res = unsafe { glfw_sys::glfwWindowShouldClose(self.raw.as_ptr()) };
+        res == 1
     }
 }
