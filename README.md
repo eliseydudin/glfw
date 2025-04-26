@@ -1,3 +1,7 @@
+# glfw
+a rust wrapper for the glfw library.
+
+```rust
 use glfw::Context;
 
 fn main() {
@@ -17,3 +21,4 @@ fn main() {
         ctx.poll_events();
     }
 }
+```
