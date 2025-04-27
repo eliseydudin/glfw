@@ -5,6 +5,7 @@ edition = "2024"
 readme = "../README.md"
 license = "MIT OR Apache-2.0"
 categories = ["api-bindings", "graphics"]
+description = "A rust wrapper for the GLFW library"
 
 [dependencies]
 glfw-sys = { path = "../glfw-rs-sys" }
