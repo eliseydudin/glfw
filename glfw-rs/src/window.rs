@@ -1,6 +1,7 @@
 use glfw_rs_sys as glfw_sys;
 use glfw_sys::{GLFWmonitor, GLFWwindow};
 use std::{
+    any,
     ffi::{CString, c_void},
     ptr::{self, NonNull},
 };
@@ -9,6 +10,13 @@ use std::{
 pub struct Window {
     raw: NonNull<GLFWwindow>,
     should_drop: bool,
+}
+
+#[doc(hidden)]
+#[derive(Clone)]
+struct UserData {
+    dtype: any::TypeId,
+    ptr: *const c_void,
 }
 
 impl Window {
@@ -47,7 +55,7 @@ impl Window {
         )
     }
 
-    /// Create a window from a raw pointer. Note that the window creates this way will
+    /// Create a window from a raw pointer. Note that the window created this way will
     /// not be dropped. Use this function in callbacks
     pub unsafe fn from_raw(ptr: *mut GLFWwindow) -> Self {
         Self {
@@ -60,6 +68,10 @@ impl Window {
 impl Drop for Window {
     fn drop(&mut self) {
         if self.should_drop {
+            if !self.get_user_data_ptr().is_null() {
+                self._deallocate_user_data();
+            }
+
             unsafe { glfw_sys::glfwDestroyWindow(self.raw.as_ptr()) }
         }
     }
@@ -120,6 +132,53 @@ impl Window {
     /// Set the function which should be called when the mouse moves
     pub fn set_mouse_callback(&self, callback: MouseCallback) {
         unsafe { glfw_sys::glfwSetCursorPosCallback(self.raw.as_ptr(), Some(callback)) };
+    }
+
+    /// Set the user data which can be accessed from callbacks.
+    pub fn set_user_data<T: any::Any>(&self, data: &T) {
+        let ptr = self.get_user_data_ptr();
+
+        if !ptr.is_null() {
+            self._deallocate_user_data();
+        }
+        self._set_user_data(data);
+    }
+
+    fn _set_user_data<T: any::Any>(&self, data: &T) {
+        let dtype = any::TypeId::of::<T>();
+        let ptr = data as *const _ as *const c_void;
+        let data = Box::new(UserData { dtype, ptr });
+
+        unsafe {
+            glfw_sys::glfwSetWindowUserPointer(
+                self.raw.as_ptr(),
+                Box::into_raw(data) as *mut c_void,
+            )
+        }
+    }
+
+    fn _deallocate_user_data(&self) {
+        let ptr = self.get_user_data_ptr();
+        drop(unsafe { Box::from_raw(ptr) })
+    }
+
+    pub fn get_user_data_ptr(&self) -> *mut c_void {
+        unsafe { glfw_sys::glfwGetWindowUserPointer(self.raw.as_ptr()) }
+    }
+
+    pub fn get_user_data<T: any::Any>(&self) -> Option<&T> {
+        let ptr = self.get_user_data_ptr() as *mut UserData;
+        if ptr.is_null() {
+            return None;
+        }
+
+        let UserData { dtype, ptr } = unsafe { (*ptr).clone() };
+        println!("{:?} {dtype:?}", any::TypeId::of::<T>());
+        if any::TypeId::of::<T>() == dtype {
+            unsafe { (ptr as *const T).as_ref() }
+        } else {
+            None
+        }
     }
 }
 
