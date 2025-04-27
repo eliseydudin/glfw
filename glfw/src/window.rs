@@ -7,6 +7,7 @@ use std::{
 /// A GLFW window
 pub struct Window {
     raw: NonNull<GLFWwindow>,
+    should_drop: bool,
 }
 
 impl Window {
@@ -20,7 +21,10 @@ impl Window {
         let handle =
             unsafe { glfw_sys::glfwCreateWindow(size.0, size.1, name.as_ptr(), monitor, shared) };
         let raw = NonNull::new(handle)?;
-        Some(Self { raw })
+        Some(Self {
+            raw,
+            should_drop: true,
+        })
     }
 
     /// Create a new window with the given name and size. Returns [`None`] if
@@ -41,11 +45,22 @@ impl Window {
             ptr::null_mut(),
         )
     }
+
+    /// Create a window from a raw pointer. Note that the window creates this way will
+    /// not be dropped. Use this function in callbacks
+    pub unsafe fn from_raw(ptr: *mut GLFWwindow) -> Self {
+        Self {
+            raw: unsafe { NonNull::new_unchecked(ptr) },
+            should_drop: false,
+        }
+    }
 }
 
 impl Drop for Window {
     fn drop(&mut self) {
-        unsafe { glfw_sys::glfwDestroyWindow(self.raw.as_ptr()) }
+        if self.should_drop {
+            unsafe { glfw_sys::glfwDestroyWindow(self.raw.as_ptr()) }
+        }
     }
 }
 
@@ -95,4 +110,19 @@ impl Window {
         let res = unsafe { glfw_sys::glfwWindowShouldClose(self.raw.as_ptr()) };
         res == 1
     }
+
+    /// Set the function which should be called when a key is pressed
+    pub fn set_key_callback(&self, callback: KeyCallback) {
+        unsafe { glfw_sys::glfwSetKeyCallback(self.raw.as_ptr(), Some(callback)) };
+    }
+
+    /// Set the function which should be called when the mouse moves
+    pub fn set_mouse_callback(&self, callback: MouseCallback) {
+        unsafe { glfw_sys::glfwSetCursorPosCallback(self.raw.as_ptr(), Some(callback)) };
+    }
 }
+
+/// Window, key, scancode, action, mods
+pub type KeyCallback = unsafe extern "C" fn(*mut GLFWwindow, i32, i32, i32, i32);
+/// Window, x, y
+pub type MouseCallback = unsafe extern "C" fn(*mut GLFWwindow, f64, f64);
