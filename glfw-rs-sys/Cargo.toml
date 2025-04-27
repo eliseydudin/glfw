@@ -6,6 +6,7 @@ readme = "../README.md"
 license = "MIT OR Apache-2.0"
 categories = ["api-bindings", "graphics"]
 repository = "https://github.com/eliseydudin/glfw"
+description = "bindings to the GLFW library"
 
 [build-dependencies]
 bindgen = "0.71.1"
