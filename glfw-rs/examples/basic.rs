@@ -1,4 +1,4 @@
-use glfw::Context;
+use glfw_rs::Context;
 
 fn main() {
     let ctx = Context::init();

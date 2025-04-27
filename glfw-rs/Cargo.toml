@@ -1,0 +1,13 @@
+[package]
+name = "glfw-rs"
+version = "0.1.1"
+edition = "2024"
+readme = "../README.md"
+license = "MIT OR Apache-2.0"
+categories = ["api-bindings", "graphics"]
+
+[dependencies]
+glfw-sys = { path = "../glfw-rs-sys" }
+
+[dev-dependencies]
+gl = "0.14.0"
