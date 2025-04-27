@@ -1,3 +1,4 @@
+use glfw_rs_sys as glfw_sys;
 use glfw_sys::{GLFWmonitor, GLFWwindow};
 use std::{
     ffi::{CString, c_void},

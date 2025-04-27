@@ -1,6 +1,6 @@
-use std::{marker::PhantomData, sync::OnceLock};
-
 use crate::{ErrorHandler, Window};
+use glfw_rs_sys as glfw_sys;
+use std::{marker::PhantomData, sync::OnceLock};
 
 static CONTEXT: OnceLock<Context> = OnceLock::new();
 

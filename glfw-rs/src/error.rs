@@ -1,4 +1,5 @@
 use core::mem;
+use glfw_rs_sys as glfw_sys;
 use std::ffi::CStr;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
