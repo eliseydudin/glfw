@@ -3,7 +3,7 @@ use glfw_rs_sys::GLFWwindow;
 
 unsafe extern "C" fn mouse_callback(window: *mut GLFWwindow, x: f64, y: f64) {
     let window = unsafe { Window::from_raw(window) };
-    let int: Option<&i32> = window.get_user_data();
+    let int: Option<&f64> = window.get_user_data();
     println!("user data: {int:?}, pos: ({x}, {y})")
 }
 

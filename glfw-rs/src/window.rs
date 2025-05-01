@@ -173,7 +173,6 @@ impl Window {
         }
 
         let UserData { dtype, ptr } = unsafe { (*ptr).clone() };
-        println!("{:?} {dtype:?}", any::TypeId::of::<T>());
         if any::TypeId::of::<T>() == dtype {
             unsafe { (ptr as *const T).as_ref() }
         } else {
