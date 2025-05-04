@@ -3,8 +3,8 @@ use glfw_rs_sys::GLFWwindow;
 
 unsafe extern "C" fn mouse_callback(window: *mut GLFWwindow, x: f64, y: f64) {
     let window = unsafe { Window::from_raw(window) };
-    let int: Option<&f64> = window.get_user_data();
-    println!("user data: {int:?}, pos: ({x}, {y})")
+    println!("Mouse position: ({x}, {y})");
+    println!("User data: {:?}", unsafe { window.get_data::<i32>() });
 }
 
 fn main() {
@@ -15,12 +15,10 @@ fn main() {
         .expect("Cannot create the window!");
     window.make_global();
 
-    let user_data = 10.0;
-    window.set_user_data(&user_data);
+    window.set_data(20);
+    let ptr: Option<&i32> = unsafe { window.get_data() };
+    println!("{ptr:?}");
     window.set_mouse_callback(mouse_callback);
-
-    let user_data: Option<&f64> = window.get_user_data();
-    println!("{:?}", user_data);
 
     gl::load_with(window.get_safe_load_proc());
     unsafe { gl::ClearColor(0.1, 0.5, 1.0, 1.0) };

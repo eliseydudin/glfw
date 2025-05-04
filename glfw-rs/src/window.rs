@@ -1,7 +1,6 @@
 use glfw_rs_sys as glfw_sys;
 use glfw_sys::{GLFWmonitor, GLFWwindow};
 use std::{
-    any,
     ffi::{CString, c_void},
     ptr::{self, NonNull},
 };
@@ -10,13 +9,6 @@ use std::{
 pub struct Window {
     raw: NonNull<GLFWwindow>,
     should_drop: bool,
-}
-
-#[doc(hidden)]
-#[derive(Clone)]
-struct UserData {
-    dtype: any::TypeId,
-    ptr: *const c_void,
 }
 
 impl Window {
@@ -135,49 +127,39 @@ impl Window {
     }
 
     /// Set the user data which can be accessed from callbacks.
-    pub fn set_user_data<T: any::Any>(&self, data: &T) {
+    pub fn set_data<T: 'static>(&self, data: T) {
         let ptr = self.get_user_data_ptr();
 
         if !ptr.is_null() {
             self._deallocate_user_data();
         }
+
         self._set_user_data(data);
     }
 
-    fn _set_user_data<T: any::Any>(&self, data: &T) {
-        let dtype = any::TypeId::of::<T>();
-        let ptr = data as *const _ as *const c_void;
-        let data = Box::new(UserData { dtype, ptr });
-
+    fn _set_user_data<T: 'static>(&self, data: T) {
         unsafe {
             glfw_sys::glfwSetWindowUserPointer(
                 self.raw.as_ptr(),
-                Box::into_raw(data) as *mut c_void,
+                Box::into_raw(Box::new(data)) as *mut c_void,
             )
         }
     }
 
     fn _deallocate_user_data(&self) {
-        let ptr = self.get_user_data_ptr();
-        drop(unsafe { Box::from_raw(ptr) })
+        drop(unsafe { Box::from_raw(self.get_user_data_ptr()) })
     }
 
     pub fn get_user_data_ptr(&self) -> *mut c_void {
         unsafe { glfw_sys::glfwGetWindowUserPointer(self.raw.as_ptr()) }
     }
 
-    pub fn get_user_data<T: any::Any>(&self) -> Option<&T> {
-        let ptr = self.get_user_data_ptr() as *mut UserData;
-        if ptr.is_null() {
-            return None;
-        }
-
-        let UserData { dtype, ptr } = unsafe { (*ptr).clone() };
-        if any::TypeId::of::<T>() == dtype {
-            unsafe { (ptr as *const T).as_ref() }
-        } else {
-            None
-        }
+    /// Get the inner user data.
+    /// # SAFETY
+    /// The caller must ensure that `T` is the type of the data stored inside
+    /// the user pointer
+    pub unsafe fn get_data<T: 'static>(&self) -> Option<&T> {
+        unsafe { self.get_user_data_ptr().cast::<T>().as_ref() }
     }
 }
 
