@@ -8,7 +8,7 @@ categories = ["api-bindings", "graphics"]
 description = "A rust wrapper for the GLFW library"
 
 [dependencies]
-glfw-rs-sys = "1.0.0"
+glfw-rs-sys = { path = "../glfw-rs-sys" }
 
 [dev-dependencies]
 gl = "0.14.0"
