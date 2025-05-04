@@ -32,6 +32,16 @@ impl Context {
         unsafe { glfw_sys::glfwPollEvents() }
     }
 
+    /// Wait for events to happen
+    pub fn wait_events(&self) {
+        unsafe { glfw_sys::glfwWaitEvents() }
+    }
+
+    /// Set the amount of frames to wait to rerender
+    pub fn set_swap_interval(&self, interval: i32) {
+        unsafe { glfw_sys::glfwSwapInterval(interval) }
+    }
+
     /// Set the error handler for the current context. You can use [`parse_params`]
     /// to parse the arguments from [`ErrorHandler`]
     ///
