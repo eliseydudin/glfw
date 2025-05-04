@@ -2,7 +2,7 @@
 name = "glfw-rs-sys"
 edition = "2024"
 version = "1.0.0"
-readme = "../README.md"
+readme = "README.md"
 license = "MIT OR Apache-2.0"
 categories = ["api-bindings", "graphics"]
 repository = "https://github.com/eliseydudin/glfw"
